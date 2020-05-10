@@ -6,39 +6,53 @@ import jdk.jshell.spi.ExecutionControl;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 //TODO: sending "hi hi" and making the arduino return it results in "hihi", all spaces lost
+//TODO:NOTE: Z is the latitude, x is the longitude
 public class Main {
-    public static double x;
+
+    //global speed multipliers
+    public static final double leftSpeedMult = 1.00d;
+    public static final double rightSpeedMult = 1.00d;
+    //if angle off (direction facing vs direction of target) is larger than this, one motor will turn off
+    public static final double maxAngleOff;
+    //if the plane turns in the opposite direction, switch this
+    public static final boolean swapMotors = false;
+    //for landing
+    public static final double landSpeedReduction = 0.1d;//amount to preiodically reduce speed by when landing
+    public static final long landSpeedReductionWait = 50;//wait 50ms before reducing speed again
+
+    public static boolean enabled = true;//if false, stop pathfinding etc. Used for landing or killing.
+
+    public static double x;//current position
     public static double y;
     public static double z;
+    public static double currentAngle;
 
-    public static ArrayList<String> commandsToSend;//the commands/data to be sent out. Each ends in ",". The command at index 0 is repeatedly sent and removes till the size() is 0
-    public static ArrayList<String> commandsReceived;//the commands/data creceived. Each ends in ",". Nothing is done with these at present
+    public static double tx;//target position
+    public static double ty;
+    public static double tz;
+
+    public static CopyOnWriteArrayList<String> commandsToSend;//the commands/data to be sent out. Each ends in ",". The command at index 0 is repeatedly sent and removes till the size() is 0
+    public static CopyOnWriteArrayList<String> commandsReceived;//the commands/data received. Each ends in ",".
     static SerialPort comPort;
     static String stringBuffer;
 
     static boolean newData;
-    public static ArrayList<String> consoleInputUnprocessed;
-    public static ArrayList<String> serialInputUnprocessed;
-    static String consoleCommandInProgress = "";
-    static String serialCommandInProgress = "";
+    public static CopyOnWriteArrayList<String> consoleInputUnprocessed;//the stuff typed in console
+    public static CopyOnWriteArrayList<String> serialInputUnprocessed;//the stuff over serial received that hasn't been processed
+    static String consoleCommandInProgress = "";//if something is typed into the console
+    static String serialCommandInProgress = "";//if something is being received over serial
 
-
-    public static void SetTargetPosition(Double xpos, Double ypos, Double zpos){
-        commandsToSend.add("t:" + xpos.toString() + ":"+ ypos.toString() + ":"+ zpos.toString() + ",");
-    }
-    public static void DropCargo(){
-        commandsToSend.add("d,");
-    }
 
     //initialization stuff
     static public void main(String[] args)
     {
-        commandsToSend = new ArrayList<String>();
-        commandsReceived = new ArrayList<String>();
-        consoleInputUnprocessed = new ArrayList<String>();
-        serialInputUnprocessed = new ArrayList<String>();
+        commandsToSend = new CopyOnWriteArrayList<String>();
+        commandsReceived = new CopyOnWriteArrayList<String>();
+        consoleInputUnprocessed = new CopyOnWriteArrayList<String>();
+        serialInputUnprocessed = new CopyOnWriteArrayList<String>();
 
         comPort = SerialPort.getCommPort("COM3");//.getCommPorts()[0];
         comPort.openPort();
@@ -52,7 +66,7 @@ public class Main {
         (new Thread(new ConsoleCommands())).start();
         (new Thread(new InputsToCommands())).start();
         (new Thread(new ProcessCommands())).start();
-
+        (new Thread(new PathFindingThread())).start();
     }
 
 
@@ -113,36 +127,38 @@ public class Main {
                         String s = commandsReceived.remove(0);
                         System.out.println("RECEIVED A COMMAND: " + s);
                         int i = s.indexOf(":");
-                        if(i!=-1){
+                        String commandString = s;
+                        if(commandString.equals("kill")){
+                            Kill();
+                        }
+                        else if(commandString.equals("land")){
+                            Land();
+                        }
+                        else if(i!=-1){
                             String commandString = s.substring(0, i);//the type of command
                             String arguments = s.substring(i + 1);//the data of the command
                             /////////////////GPS update command received//////
                             if(commandString.equals("gps")){
                                 boolean succeeded = true;
-                                double tempx, tempy, tempz;
+                                double tempx = 0;
+                                double tempy = 0;
+                                double tempz = 0;
                                 try{
-
                                     i = arguments.indexOf(":");
                                     if(i!=-1){
-                                        x = Double.parseDouble(arguments.substring(0, i));
+                                        tempx = Double.parseDouble(arguments.substring(0, i));
                                         arguments = arguments.substring(i + 1);
                                     }else{
                                         succeeded = false;
                                     }
                                     i = arguments.indexOf(":");
                                     if(i!=-1){
-                                        y = Double.parseDouble(arguments.substring(0, i));
+                                        tempy = Double.parseDouble(arguments.substring(0, i));
                                         arguments = arguments.substring(i + 1);
                                     }else{
                                         succeeded = false;
                                     }
-                                    i = arguments.indexOf(":");
-                                    if(i!=-1){
-                                        z = Double.parseDouble(arguments.substring(0, i));
-//                                        arguments = arguments.substring(i + 1);
-                                    }else{
-                                        succeeded = false;
-                                    }
+                                    tempz = Double.parseDouble(arguments);
                                 }catch (Exception e){
                                     e.printStackTrace();
                                     succeeded = false;
@@ -153,11 +169,30 @@ public class Main {
                                     z = tempz;
                                     System.out.println("UPDATED GPS: " + tempx + ", " + tempy + ", " + tempz);
                                 }
-                            }else{
-                                System.out.println("The received command did nothing: " + commandString);
+                            }
+                            else if(commandString.equals("rot")){
+                                boolean succeeded = true;
+                                double temprot = 0;
+                                try{
+                                    temprot = Double.parseDouble(arguments);
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                    succeeded = false;
+                                }
+                                if(succeeded){
+                                    currentAngle = temprot;
+                                    System.out.println("UPDATED ROTATION: " + temprot);
+                                }
+                            }
+                            else{
+                                System.out.println("The received command (with :) did nothing: " + commandString);
                             }
                             ////////////////////////////////////////
                         }
+                        else{
+                            System.out.println("The received command did nothing: " + commandString);
+                        }
+
                     }
                     Thread.sleep(1);
                 }
@@ -167,7 +202,7 @@ public class Main {
         }
     }
 
-    //this writes out the commandsToSend to the arduino and says "SENDING: "
+    //this writes out the commandsToSend to the arduino and says "SENDING COMMAND: "
     public static class SerialWriter implements Runnable
     {
         OutputStream out;
@@ -247,4 +282,107 @@ public class Main {
         }
     }
 
+    /////////////////pathfinding
+    public static class PathFindingThread implements Runnable
+    {
+        public void run ()
+        {
+            try{
+                while(true){
+                    if(enabled){
+                        //TODO: for now, only the x and z are considered, the y is ignored
+                        double dx = tx-x;
+                        double dz = tz-z;
+                        double angle = Math.atan2(z, x) * 57.295779513d;//rad to deg, perhaps it should be (x, z)
+                        double diff = angle - currentAngle;
+                        //get between to -180, 180
+                        while (diff > 180) diff -= 360;
+                        while (diff < -180) diff += 360;
+
+
+                        setLeft();
+                        setRight();
+                    }
+
+                    Thread.sleep(1);//don't hog CPU
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void GetTargetPosition(){
+        //set tx, ty, tz here
+        System.out.println("Tried to get target position but this code is not written yet");
+    }
+    public static String DTS(Double d){//Double to String
+        return String.format ("%.9f", d);//limit to 9 decimal places and force non-scientific notation
+    }
+
+    //////////commands to send
+
+
+    //won't be used most likely
+    public static void SetTargetPosition(Double xpos, Double ypos, Double zpos){
+        commandsToSend.add("t:" + DTS(xpos) + ":"+ DTS(ypos) + ":"+ DTS(zpos) + ",");
+    }
+
+    //drop the cargo
+    public static void DropCargo(){
+        commandsToSend.add("d,");
+    }
+    public static long DoubleToMotorSpeed(Double d){
+        return Math.round(d * 100d);
+    }
+    //set motor speeds. Takes in a double from 0 - 1
+    public static void SetLeft(Double s){
+        String temp = swapMotors ? "right:" : "left:";
+        commandsToSend.add(temp + DoubleToMotorSpeed(s * leftSpeedMult) + ",");
+    }
+    public static void SetRight(Double s){
+        String temp = swapMotors ? "left:" : "right:";
+        commandsToSend.add(temp + DoubleToMotorSpeed(s * rightSpeedMult) + ",");
+    }
+    public static void SetBoth(Double s){
+        SetLeft(s);
+        SetRight(s);
+    }
+
+    //slowly reduces speed
+    public static void Land(){
+        (new Thread(new LandThread())).start();
+        enabled = false;
+        System.out.println("Started Landing");
+    }
+
+    public static void Kill(){
+        SetLeft(0d);
+        SetRight(0d);
+        enabled = false;
+        System.out.println("Killed");
+    }
+
+    /////land
+    public static class LandThread implements Runnable
+    {
+        double speed;
+        public LandThread(){
+            speed = 1.00;
+        }
+        public void run ()
+        {
+            try{
+                while(speed > 0.1d){
+                    SetBoth(speed);
+                    speed -= landSpeedReduction;
+                    Thread.sleep(landSpeedReductionWait);//don't hog CPU
+                }
+                Kill();
+                System.out.println("Finished Landing");
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
 }
