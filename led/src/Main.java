@@ -299,9 +299,17 @@ public class Main {
                         while (diff > 180) diff -= 360;
                         while (diff < -180) diff += 360;
 
+                        double rs = 1;
+                        double ls = 1;
+                        if(diff > 0){
+                            ls = (1d - diff / maxAngleOff) * rs;
+                        }else{
+                            //diff is negative, so the sign is flipped
+                            rs = (1d + diff / maxAngleOff) * rs;
+                        }
 
-                        setLeft();
-                        setRight();
+                        SetLeft(rs);
+                        SetRight(ls);
                     }
 
                     Thread.sleep(1);//don't hog CPU
