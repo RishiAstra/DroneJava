@@ -16,7 +16,8 @@ public class Main {
     public static final double leftSpeedMult = 1.00d;
     public static final double rightSpeedMult = 1.00d;
     //if angle off (direction facing vs direction of target) is larger than this, one motor will turn off
-    public static final double maxAngleOff;
+    public static final double maxAngleOff = 45d;
+    public static final double minSpeed = 0.5d;
     //if the plane turns in the opposite direction, switch this
     public static final boolean swapMotors = false;
     //for landing
@@ -307,6 +308,8 @@ public class Main {
                             //diff is negative, so the sign is flipped
                             rs = (1d + diff / maxAngleOff) * rs;
                         }
+                        rs = rs * (1-minSpeed) + minSpeed;
+                        ls = ls * (1-minSpeed) + minSpeed;
 
                         SetLeft(rs);
                         SetRight(ls);
@@ -332,9 +335,9 @@ public class Main {
 
 
     //won't be used most likely
-    public static void SetTargetPosition(Double xpos, Double ypos, Double zpos){
-        commandsToSend.add("t:" + DTS(xpos) + ":"+ DTS(ypos) + ":"+ DTS(zpos) + ",");
-    }
+//    public static void SetTargetPosition(Double xpos, Double ypos, Double zpos){
+//        commandsToSend.add("t:" + DTS(xpos) + ":"+ DTS(ypos) + ":"+ DTS(zpos) + ",");
+//    }
 
     //drop the cargo
     public static void DropCargo(){
