@@ -15,7 +15,7 @@ public class Main {
     //global speed multipliers
     public static final double leftSpeedMult = 1.00d;
     public static final double rightSpeedMult = 1.00d;
-    //if angle off (direction facing vs direction of target) is larger than this, one motor will turn off
+    //if angle off (direction facing vs direction of target) is larger than this, one motor will be at minSpeed
     public static final double maxAngleOff = 45d;
     public static final double minSpeed = 0.5d;
     //if the plane turns in the opposite direction, switch this
