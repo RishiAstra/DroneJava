@@ -8,14 +8,18 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-//TODO: sending "hi hi" and making the arduino return it results in "hihi", all spaces lost
-//TODO:NOTE: Z is the latitude, x is the longitude
+/*
+ * TODO: sending "hi hi" and making the arduino return it results in "hihi", all spaces lost
+ * NOTE: z is the latitude, x is the longitude
+ * NOTE: to turn, the motor speeds and rudder are adjusted
+ */
 public class Main {
 
     //global speed multipliers
     public static final double leftSpeedMult = 1.00d;
     public static final double rightSpeedMult = 1.00d;
     //if angle off (direction facing vs direction of target) is larger than this, one motor will be at minSpeed
+    //because the rudder is used to turn, this might not be necessary
     public static final double maxAngleOff = 45d;
     public static final double minSpeed = 0.5d;
     //if the plane turns in the opposite direction, switch this
@@ -23,17 +27,22 @@ public class Main {
     //for landing
     public static final double landSpeedReduction = 0.1d;//amount to preiodically reduce speed by when landing
     public static final long landSpeedReductionWait = 50;//wait 50ms before reducing speed again
+    //rudder constants
+    public static final double rudderMiddleAngle = 90;//what angle is the rudder straight
+    public static final double rudderMaxAngle = 60;//how far to one side of the middle angle can it turn
 
     public static boolean enabled = true;//if false, stop pathfinding etc. Used for landing or killing.
 
-    public static double x;//current position
-    public static double y;
-    public static double z;
+    public static final double distForTargetHit = 1 * 0.00000898331;//deg to meter constant is included
+
+    public static Coord p;//current position
     public static double currentAngle;
 
-    public static double tx;//target position
-    public static double ty;
-    public static double tz;
+    //TODO: WARNING:t.y is not used at the moment
+    public static Coord t;//target position
+    public static CopyOnWriteArrayList<Coord> targetPoints;//the target points to reach
+    public static int targetPointIndex = 0;
+
 
     public static CopyOnWriteArrayList<String> commandsToSend;//the commands/data to be sent out. Each ends in ",". The command at index 0 is repeatedly sent and removes till the size() is 0
     public static CopyOnWriteArrayList<String> commandsReceived;//the commands/data received. Each ends in ",".
@@ -165,9 +174,9 @@ public class Main {
                                     succeeded = false;
                                 }
                                 if(succeeded){
-                                    x = tempx;
-                                    y = tempy;
-                                    z = tempz;
+                                    p.x = tempx;
+                                    p.y = tempy;
+                                    p.z = tempz;
                                     System.out.println("UPDATED GPS: " + tempx + ", " + tempy + ", " + tempz);
                                 }
                             }
@@ -183,6 +192,36 @@ public class Main {
                                 if(succeeded){
                                     currentAngle = temprot;
                                     System.out.println("UPDATED ROTATION: " + temprot);
+                                }
+                            }
+                            else if(commandString.equals("addt")){
+                                boolean succeeded = true;
+                                double tempx = 0;
+                                double tempy = 0;
+                                double tempz = 0;
+                                try{
+                                    i = arguments.indexOf(":");
+                                    if(i!=-1){
+                                        tempx = Double.parseDouble(arguments.substring(0, i));
+                                        arguments = arguments.substring(i + 1);
+                                    }else{
+                                        succeeded = false;
+                                    }
+                                    i = arguments.indexOf(":");
+                                    if(i!=-1){
+                                        tempy = Double.parseDouble(arguments.substring(0, i));
+                                        arguments = arguments.substring(i + 1);
+                                    }else{
+                                        succeeded = false;
+                                    }
+                                    tempz = Double.parseDouble(arguments);
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                    succeeded = false;
+                                }
+                                if(succeeded){
+                                    targetPoints.add(new Coord(tempx, tempy, tempz));
+                                    System.out.println("ADDED TARGET: " + tempx + ", " + tempy + ", " + tempz);
                                 }
                             }
                             else{
@@ -291,28 +330,8 @@ public class Main {
             try{
                 while(true){
                     if(enabled){
-                        //TODO: for now, only the x and z are considered, the y is ignored
-                        double dx = tx-x;
-                        double dz = tz-z;
-                        double angle = Math.atan2(z, x) * 57.295779513d;//rad to deg, perhaps it should be (x, z)
-                        double diff = angle - currentAngle;
-                        //get between to -180, 180
-                        while (diff > 180) diff -= 360;
-                        while (diff < -180) diff += 360;
-
-                        double rs = 1;
-                        double ls = 1;
-                        if(diff > 0){
-                            ls = (1d - diff / maxAngleOff) * rs;
-                        }else{
-                            //diff is negative, so the sign is flipped
-                            rs = (1d + diff / maxAngleOff) * rs;
-                        }
-                        rs = rs * (1-minSpeed) + minSpeed;
-                        ls = ls * (1-minSpeed) + minSpeed;
-
-                        SetLeft(rs);
-                        SetRight(ls);
+                        CheckTarget();
+                        AttackTarget();
                     }
 
                     Thread.sleep(1);//don't hog CPU
@@ -323,8 +342,70 @@ public class Main {
         }
     }
 
+    //calculated distance, ignoring y
+    public static double DistSq(Coord a, Coord b){
+        return (a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z);
+    }
+
+    //checks if target is hit
+    public static void CheckTarget(){
+        double distSq = DistSq(t, p);
+        //if close enough to target
+        if(distSq < distForTargetHit * distForTargetHit){
+            NextTarget();
+        }
+    }
+
+    //selects the next target
+    public static void NextTarget() {
+        targetPoints.remove(targetPointIndex);
+        //find index of closest point
+        int index = -1;
+        double d = 99999999999d;
+        for(int i = 0;i < targetPoints.size();i++){
+            double tempDist = DistSq(targetPoints.get(i), p);
+            if(tempDist < d){
+                d = tempDist;
+                index = i;
+            }
+        }
+
+        //update the target
+        targetPointIndex = index;
+        p = targetPoints.get(targetPointIndex);
+    }
+
+    public static void AttackTarget() {
+        //TODO: for now, only the x and z are considered, the y is ignored
+        double dx = t.x-p.x;
+        double dz = t.z-p.z;
+        double angle = Math.atan2(p.z, p.x) * 57.295779513d;//rad to deg, perhaps it should be (x, z)
+        double diff = angle - currentAngle;
+        //get between to -180, 180
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
+
+        double rs = 1;
+        double ls = 1;
+        double rudderMult = 0;//a value from [-1, 1] of the rudder position desired
+        if(diff < 0){
+            //diff is negative, so the sign is flipped
+            //this reduces the left speed
+            ls *= (1d + diff / maxAngleOff);
+        }else{
+            rs *= (1d - diff / maxAngleOff);
+        }
+        rs = rs * (1-minSpeed) + minSpeed;
+        ls = ls * (1-minSpeed) + minSpeed;
+        rudderMult = diff/maxAngleOff;
+
+        SetLeft(rs);
+        SetRight(ls);
+        SetRudder(rudderMult);
+    }
+
     public static void GetTargetPosition(){
-        //set tx, ty, tz here
+        //set t here
         System.out.println("Tried to get target position but this code is not written yet");
     }
     public static String DTS(Double d){//Double to String
@@ -348,11 +429,25 @@ public class Main {
     }
     //set motor speeds. Takes in a double from 0 - 1
     public static void SetLeft(Double s){
+        if(s > 1) s = 1;
+        if(s < -1) s = -1;
         String temp = swapMotors ? "right:" : "left:";
         commandsToSend.add(temp + DoubleToMotorSpeed(s * leftSpeedMult) + ",");
     }
     public static void SetRight(Double s){
+        if(s > 1) s = 1;
+        if(s < -1) s = -1;
         String temp = swapMotors ? "left:" : "right:";
+        commandsToSend.add(temp + DoubleToMotorSpeed(s * rightSpeedMult) + ",");
+    }
+    //s should be between [-1, 1]
+    public static void SetRudder(Double s){
+        if(s > 1) s = 1;
+        if(s < -1) s = -1;
+        String temp = "rudder:";
+        if(swapMotors) s = -s;
+        s *= rudderMaxAngle;//multiply
+        s += rudderMiddleAngle;//relative to middle angle
         commandsToSend.add(temp + DoubleToMotorSpeed(s * rightSpeedMult) + ",");
     }
     public static void SetBoth(Double s){

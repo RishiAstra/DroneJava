@@ -34,7 +34,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="extract.method.default.visibility" value="private" />
+    <property name="extract.method.default.visibility" value="public" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.15" />
@@ -85,6 +85,12 @@
       <updated>1583546873157</updated>
     </task>
     <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="530" y="180" key="extract.method.dialog" timestamp="1590950748936">
+      <screen x="0" y="0" width="1600" height="860" />
+    </state>
+    <state x="530" y="180" key="extract.method.dialog/0.0.1600.860@0.0.1600.860" timestamp="1590950748935" />
   </component>
   <component name="masterDetails">
     <states>
