@@ -181,6 +181,7 @@ public class Main {
                                     if(!firstGPSreceived){
                                         t = new Coord(p);
                                         firstGPSreceived = true;
+                                        System.out.println("First time receiving GPS, so a target was added: " + tempx + ", " + tempy + ", " + tempz);
                                     }
                                 }
                             }
