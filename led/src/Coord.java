@@ -8,4 +8,9 @@ public class Coord {
         this.y = y;
         this.z = z;
     }
+    public Coord(Coord o){
+        this.x = o.x;
+        this.y = o.y;
+        this.z = o.z;
+    }
 }

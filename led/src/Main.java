@@ -54,7 +54,7 @@ public class Main {
     public static CopyOnWriteArrayList<String> serialInputUnprocessed;//the stuff over serial received that hasn't been processed
     static String consoleCommandInProgress = "";//if something is typed into the console
     static String serialCommandInProgress = "";//if something is being received over serial
-
+    static boolean firstGPSreceived = false;
 
     //initialization stuff
     static public void main(String[] args)
@@ -145,7 +145,7 @@ public class Main {
                             Land();
                         }
                         else if(i!=-1){
-                            String commandString = s.substring(0, i);//the type of command
+                            commandString = s.substring(0, i);//the type of command
                             String arguments = s.substring(i + 1);//the data of the command
                             /////////////////GPS update command received//////
                             if(commandString.equals("gps")){
@@ -178,6 +178,10 @@ public class Main {
                                     p.y = tempy;
                                     p.z = tempz;
                                     System.out.println("UPDATED GPS: " + tempx + ", " + tempy + ", " + tempz);
+                                    if(!firstGPSreceived){
+                                        t = new Coord(p);
+                                        firstGPSreceived = true;
+                                    }
                                 }
                             }
                             else if(commandString.equals("rot")){
@@ -329,7 +333,7 @@ public class Main {
         {
             try{
                 while(true){
-                    if(enabled){
+                    if(t!=null && enabled){
                         CheckTarget();
                         AttackTarget();
                     }
@@ -358,6 +362,9 @@ public class Main {
 
     //selects the next target
     public static void NextTarget() {
+        //if there is no next target, keep circling around this target
+        if(targetPoints.size() <= 1) return;
+
         targetPoints.remove(targetPointIndex);
         //find index of closest point
         int index = -1;
@@ -429,21 +436,21 @@ public class Main {
     }
     //set motor speeds. Takes in a double from 0 - 1
     public static void SetLeft(Double s){
-        if(s > 1) s = 1;
-        if(s < -1) s = -1;
+        if(s > 1) s = 1d;
+        if(s < -1) s = -1d;
         String temp = swapMotors ? "right:" : "left:";
         commandsToSend.add(temp + DoubleToMotorSpeed(s * leftSpeedMult) + ",");
     }
     public static void SetRight(Double s){
-        if(s > 1) s = 1;
-        if(s < -1) s = -1;
+        if(s > 1) s = 1d;
+        if(s < -1) s = -1d;
         String temp = swapMotors ? "left:" : "right:";
         commandsToSend.add(temp + DoubleToMotorSpeed(s * rightSpeedMult) + ",");
     }
     //s should be between [-1, 1]
     public static void SetRudder(Double s){
-        if(s > 1) s = 1;
-        if(s < -1) s = -1;
+        if(s > 1) s = 1d;
+        if(s < -1) s = -1d;
         String temp = "rudder:";
         if(swapMotors) s = -s;
         s *= rudderMaxAngle;//multiply
