@@ -367,6 +367,7 @@ public class Main {
         if(targetPoints.size() <= 1) return;
 
         targetPoints.remove(targetPointIndex);
+        
         //find index of closest point
         int index = -1;
         double d = 99999999999d;
