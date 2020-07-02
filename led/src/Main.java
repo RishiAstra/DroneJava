@@ -3,7 +3,10 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import jdk.jshell.spi.ExecutionControl;
 
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -55,24 +58,41 @@ public class Main {
     static String consoleCommandInProgress = "";//if something is typed into the console
     static String serialCommandInProgress = "";//if something is being received over serial
     static boolean firstGPSreceived = false;
+    static Socket socket;
 
     //initialization stuff
     static public void main(String[] args)
     {
+        try{
+            socket = new Socket("127.0.0.1", 25575	);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
         commandsToSend = new CopyOnWriteArrayList<String>();
         commandsReceived = new CopyOnWriteArrayList<String>();
         consoleInputUnprocessed = new CopyOnWriteArrayList<String>();
         serialInputUnprocessed = new CopyOnWriteArrayList<String>();
 
-        comPort = SerialPort.getCommPort("COM3");//.getCommPorts()[0];
-        comPort.openPort();
-        comPort.setBaudRate(115200);
-        comPort.setComPortParameters(115200, 8,1, SerialPort.NO_PARITY);
-        System.out.println("COM port open: " + comPort.getDescriptivePortName());
-        DataListener listener = new DataListener();
-        comPort.addDataListener(listener);
-        System.out.println("Event Listener open.");
-        (new Thread(new SerialWriter(comPort.getOutputStream()))).start();
+//        comPort = SerialPort.getCommPort("COM3");//.getCommPorts()[0];
+//        comPort.openPort();
+//        comPort.setBaudRate(115200);
+//        comPort.setComPortParameters(115200, 8,1, SerialPort.NO_PARITY);
+//        System.out.println("COM port open: " + comPort.getDescriptivePortName());
+//        DataListener listener = new DataListener();
+//        comPort.addDataListener(listener);
+//        System.out.println("Event Listener open.");
+
+//        (new Thread(new SerialWriter(comPort.getOutputStream()))).start();
+        try{
+            (new Thread(new SerialWriter(socket.getOutputStream()))).start();
+            (new Thread(new DataReader(socket.getInputStream()))).start();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
         (new Thread(new ConsoleCommands())).start();
         (new Thread(new InputsToCommands())).start();
         (new Thread(new ProcessCommands())).start();
@@ -300,27 +320,61 @@ public class Main {
         }
     }
 
+//    //this reads data
+//    private static final class DataListener implements SerialPortDataListener
+//    {
+//        @Override
+//        public int getListeningEvents() { return SerialPort.LISTENING_EVENT_DATA_AVAILABLE; }
+//
+//        @Override
+//        public void serialEvent(SerialPortEvent event)
+//        {
+//            try {
+//                //System.out.println("In event listener.");
+//                if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE)
+//                    return;
+//                //System.out.println("Past event type check.");
+//                byte[] newData = new byte[comPort.bytesAvailable()];
+//                int numRead = comPort.readBytes(newData, newData.length);
+//                stringBuffer = new String(newData, "ASCII");//new String(newData,0,numRead);
+//                //System.out.println("Read " + numRead + " bytes.");
+//                System.out.println("RECIEVED: " + stringBuffer);
+//                serialInputUnprocessed.add(stringBuffer);
+//
+//            }catch (Exception e){
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+
     //this reads data
-    private static final class DataListener implements SerialPortDataListener
+    private static final class DataReader implements  Runnable
     {
-        @Override
-        public int getListeningEvents() { return SerialPort.LISTENING_EVENT_DATA_AVAILABLE; }
+        InputStream in;
+
+        public DataReader ( InputStream in )
+        {
+            this.in = in;
+
+        }
+
 
         @Override
-        public void serialEvent(SerialPortEvent event)
+        public void run()
         {
             try {
-                //System.out.println("In event listener.");
-                if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE)
-                    return;
-                //System.out.println("Past event type check.");
-                byte[] newData = new byte[comPort.bytesAvailable()];
-                int numRead = comPort.readBytes(newData, newData.length);
-                stringBuffer = new String(newData, "ASCII");//new String(newData,0,numRead);
-                //System.out.println("Read " + numRead + " bytes.");
-                System.out.println("RECIEVED: " + stringBuffer);
-                serialInputUnprocessed.add(stringBuffer);
-
+                while(true){
+                    /////sends commandsToSend
+                    while(in.available() > 0){
+                        byte[] newData = new byte[in.available()];
+                        in.read(newData);
+                        stringBuffer = new String(newData, "ASCII");//new String(newData,0,numRead);
+                        //System.out.println("Read " + numRead + " bytes.");
+                        System.out.println("RECIEVED: " + stringBuffer);
+                        serialInputUnprocessed.add(stringBuffer);
+                    }
+                    Thread.sleep(1);
+                }
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -367,7 +421,7 @@ public class Main {
         if(targetPoints.size() <= 1) return;
 
         targetPoints.remove(targetPointIndex);
-        
+
         //find index of closest point
         int index = -1;
         double d = 99999999999d;
