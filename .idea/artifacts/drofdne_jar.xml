@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
-  <artifact name="led:jar">
-    <output-path>$PROJECT_DIR$/led/out/artifacts/led_jar</output-path>
+  <artifact name="drofdne:jar">
+    <output-path>$PROJECT_DIR$/led/out/artifacts/drofdne_jar</output-path>
     <root id="root">
       <element id="archive" name="led.jar">
         <element id="module-output" name="led" />

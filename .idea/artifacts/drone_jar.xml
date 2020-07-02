@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="drone:jar">
+    <output-path>$PROJECT_DIR$/led/out/artifacts/drone_jar</output-path>
+    <root id="archive" name="led.jar">
+      <element id="module-output" name="led" />
+    </root>
+  </artifact>
+</component>

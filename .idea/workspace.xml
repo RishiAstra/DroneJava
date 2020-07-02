@@ -8,6 +8,7 @@
   <component name="ChangeListManager">
     <list default="true" id="b9ba65cf-72a9-4ced-8837-ed2d118d29fb" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/led/out/artifacts/led_jar/led.jar" beforeDir="false" afterPath="$PROJECT_DIR$/led/out/artifacts/led_jar/led.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/led/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/led/src/Main.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/led/out/" />
@@ -25,9 +26,10 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/led/src/Main.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="190">
-              <caret line="66" column="50" selection-start-line="66" selection-start-column="45" selection-end-line="66" selection-end-column="50" />
+            <state relative-caret-position="136">
+              <caret line="8" selection-start-line="8" selection-end-line="8" />
               <folding>
+                <element signature="e#0#21629#0" expanded="true" />
                 <element signature="e#3989#5889#0" />
                 <element signature="e#5935#12284#0" />
                 <element signature="e#13156#13661#0" />
@@ -126,7 +128,7 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="extract.method.default.visibility" value="public" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/led" />
-    <property name="project.structure.last.edited" value="Libraries" />
+    <property name="project.structure.last.edited" value="Artifacts" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
@@ -231,9 +233,10 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/led/src/Main.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="66" column="50" selection-start-line="66" selection-start-column="45" selection-end-line="66" selection-end-column="50" />
+        <state relative-caret-position="136">
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
           <folding>
+            <element signature="e#0#21629#0" expanded="true" />
             <element signature="e#3989#5889#0" />
             <element signature="e#5935#12284#0" />
             <element signature="e#13156#13661#0" />
@@ -263,11 +266,12 @@
       <state key="ArtifactsStructureConfigurable.UI">
         <settings>
           <artifact-editor />
-          <last-edited>led:jar</last-edited>
+          <last-edited>drone:jar</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
                 <option value="0.2" />
+                <option value="0.5" />
               </list>
             </option>
           </splitter-proportions>

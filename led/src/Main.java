@@ -1,13 +1,11 @@
-import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortDataListener;
-import com.fazecast.jSerialComm.SerialPortEvent;
-import jdk.jshell.spi.ExecutionControl;
+//import com.fazecast.jSerialComm.SerialPort;
+//import com.fazecast.jSerialComm.SerialPortDataListener;
+//import com.fazecast.jSerialComm.SerialPortEvent;
+//import jdk.jshell.spi.ExecutionControl;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -49,7 +47,7 @@ public class Main {
 
     public static CopyOnWriteArrayList<String> commandsToSend;//the commands/data to be sent out. Each ends in ",". The command at index 0 is repeatedly sent and removes till the size() is 0
     public static CopyOnWriteArrayList<String> commandsReceived;//the commands/data received. Each ends in ",".
-    static SerialPort comPort;
+//    static SerialPort comPort;
     static String stringBuffer;
 
     static boolean newData;

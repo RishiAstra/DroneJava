@@ -1,0 +1,1 @@
+java -jar drone.jar
