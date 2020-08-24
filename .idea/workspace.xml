@@ -47,12 +47,6 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
-    <option name="width" value="976" />
-    <option name="height" value="1056" />
-  </component>
   <component name="ProjectId" id="1bj41Td60Hp2iZinmbSSgjizAX2" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -61,7 +55,7 @@
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="extract.method.default.visibility" value="public" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/led/src/java" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/led/src/opencv-2413.jar!/" />
     <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
@@ -125,20 +119,21 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
     <state x="597" y="301" key="DetectedRootsChooserDialog" timestamp="1595464256062">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
     <state x="597" y="301" key="DetectedRootsChooserDialog/0.0.1600.860@0.0.1600.860" timestamp="1595464256062" />
-    <state x="506" y="172" key="FileChooserDialogImpl" timestamp="1595464307135">
+    <state x="506" y="172" key="FileChooserDialogImpl" timestamp="1596846160552">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
-    <state x="506" y="172" key="FileChooserDialogImpl/0.0.1600.860@0.0.1600.860" timestamp="1595464307135" />
-    <state x="280" y="5" key="SettingsEditor" timestamp="1595464310645">
+    <state x="506" y="172" key="FileChooserDialogImpl/0.0.1600.860@0.0.1600.860" timestamp="1596846160552" />
+    <state x="280" y="5" key="SettingsEditor" timestamp="1596846164361">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
-    <state x="280" y="5" key="SettingsEditor/0.0.1600.860@0.0.1600.860" timestamp="1595464310645" />
+    <state x="280" y="5" key="SettingsEditor/0.0.1600.860@0.0.1600.860" timestamp="1596846164361" />
     <state x="530" y="180" key="extract.method.dialog" timestamp="1590950748936">
       <screen x="0" y="0" width="1600" height="860" />
     </state>

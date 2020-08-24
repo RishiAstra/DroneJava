@@ -1,3 +1,4 @@
+import java.beans.FeatureDescriptor;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.util.HashMap;
 
 import org.opencv.core.*;
 import org.opencv.core.Core.*;
-import org.opencv.features2d.*;
+import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.imgproc.*;
@@ -274,7 +275,7 @@ public class GripPipeline {
 	 */
 	private void findBlobs(Mat input, double minArea, double[] circularity,
 		Boolean darkBlobs, MatOfKeyPoint blobList) {
-		Feature2D blobDet = Feature2D.create(Feature2D.SIMPLEBLOB);
+		FeatureDetector blobDet = FeatureDetector.create(FeatureDetector.SIMPLEBLOB);
 		try {
 			File tempFile = File.createTempFile("config", ".xml");
 
